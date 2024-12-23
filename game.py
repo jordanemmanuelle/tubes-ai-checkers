@@ -2,6 +2,8 @@ import pygame
 import sys
 from copy import deepcopy
 import random
+import os
+from menu import main_menu  # Assuming you put the menu code in a separate file
 
 # window
 WIDTH, HEIGHT = 800, 800
@@ -20,9 +22,11 @@ Brown = (210, 180, 135)
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Checkers Game")
+
+# Initialize font
+pygame.font.init()
 FONT = pygame.font.SysFont('arial', 32)
 
-# __ atau 2 under score: buat nandain metode khusus
 class Piece:
     def __init__(self, row, col, color):
         self.row = row
@@ -31,11 +35,10 @@ class Piece:
         self.king = False 
 
     def make_king(self):
-        self.king = True # kalo udah jd king bisa gerak diagonal maju dan mundur
+        self.king = True
 
     def draw(self, screen):
         radius = SQUARE_SIZE // 3
-        # gambar lingkaran
         pygame.draw.circle(screen, self.color, (self.col * SQUARE_SIZE + SQUARE_SIZE // 2, self.row * SQUARE_SIZE + SQUARE_SIZE // 2), radius)
         if self.king:
             pygame.draw.circle(screen, Gray, (self.col * SQUARE_SIZE + SQUARE_SIZE // 2, self.row * SQUARE_SIZE + SQUARE_SIZE // 2), radius // 2)
@@ -53,13 +56,13 @@ class Board:
             for col in range(COLS):
                 if (row + col) % 2 == 1:
                     if row < 3:
-                        self.board[row].append(Piece(row, col, DarkBrown)) # kasih piece musuh
+                        self.board[row].append(Piece(row, col, DarkBrown))
                     elif row > 4:
-                        self.board[row].append(Piece(row, col, White)) # kasih piece kita
+                        self.board[row].append(Piece(row, col, White))
                     else:
-                        self.board[row].append(0) # else = koooosongggggg
+                        self.board[row].append(0)
                 else:
-                    self.board[row].append(0) # kosong
+                    self.board[row].append(0)
 
     def draw_squares(self):
         for row in range(ROWS):
@@ -185,7 +188,7 @@ class Game:
 def main():
     clock = pygame.time.Clock()
     game = Game()
-
+    main_menu(game)  # Show the main menu when the game starts
     while True:
         clock.tick(60)
         if game.board.turn == DarkBrown:
