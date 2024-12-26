@@ -1,16 +1,12 @@
 import pygame
 import sys
-from copy import deepcopy
 import random
-import os
-from menu import main_menu  # Assuming you put the menu code in a separate file
+from menu import main_menu
 
-# window
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 800, 850 
 ROWS, COLS = 8, 8
 SQUARE_SIZE = WIDTH // COLS
 
-# colors
 White = (255, 235, 205)
 Black = (0, 0, 0)
 DarkBrown = (139, 69, 19)
@@ -18,21 +14,20 @@ Blue = (0, 0, 255)
 Gray = (128, 128, 128)
 Brown = (210, 180, 135)
 
-# init pygame
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Checkers Game")
 
-# Initialize font
 pygame.font.init()
 FONT = pygame.font.SysFont('arial', 32)
+BUTTON_FONT = pygame.font.SysFont('arial', 24) 
 
 class Piece:
     def __init__(self, row, col, color):
         self.row = row
         self.col = col
         self.color = color
-        self.king = False 
+        self.king = False
 
     def make_king(self):
         self.king = True
@@ -46,8 +41,10 @@ class Piece:
 class Board:
     def __init__(self):
         self.board = []
-        self.selected_piece = None 
+        self.selected_piece = None
         self.turn = White  # white goes first
+        self.pieces_captured_player = 0  # counter yang udah dimakan buat User
+        self.pieces_captured_ai = 0      # counter yang udah dimakan buat AI
         self.create_board()
 
     def create_board(self):
@@ -67,7 +64,11 @@ class Board:
     def draw_squares(self):
         for row in range(ROWS):
             for col in range(COLS):
-                color = Brown if (row + col) % 2 == 0 else Black
+                # Change the color of the squares
+                if (row + col) % 2 == 0:
+                    color = (169, 169, 169)  # Light gray for light squares
+                else:
+                    color = (105, 105, 105)  # Dark gray for dark squares
                 pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
     def draw(self):
@@ -94,7 +95,6 @@ class Board:
             if 0 <= row < ROWS and 0 <= col < COLS and self.board[row][col] == 0:
                 moves[(row, col)] = None
 
-            # Check for captures
             jump_row, jump_col = row + direction, col + dcol
             if 0 <= jump_row < ROWS and 0 <= jump_col < COLS:
                 if self.board[row][col] != 0 and self.board[row][col].color != piece.color and self.board[jump_row][jump_col] == 0:
@@ -103,6 +103,10 @@ class Board:
 
     def remove(self, pieces):
         for piece in pieces:
+            if piece.color == White:
+                self.pieces_captured_ai += 1
+            elif piece.color == DarkBrown:
+                self.pieces_captured_player += 1
             self.board[piece.row][piece.col] = 0
 
     def winner(self):
@@ -149,9 +153,9 @@ class Game:
         piece = self.selected
         if piece and (row, col) in self.valid_moves:
             self.board.move(piece, row, col)
-            captuDarkBrown = self.valid_moves[(row, col)]
-            if captuDarkBrown:
-                self.board.remove([self.board.board[captuDarkBrown[0]][captuDarkBrown[1]]])
+            captured_piece = self.valid_moves[(row, col)]
+            if captured_piece:
+                self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
 
             self.change_turn()
             return True
@@ -163,6 +167,19 @@ class Game:
 
     def update(self):
         self.board.draw()
+
+        # blank hitam
+        pygame.draw.rect(screen, Black, (0, HEIGHT - 50, WIDTH, 50))
+        player_text = FONT.render(f"You: {self.board.pieces_captured_player}", True, White)
+        ai_text = FONT.render(f"Opponent: {self.board.pieces_captured_ai}", True, White)
+        screen.blit(player_text, (40, HEIGHT - 45))
+        screen.blit(ai_text, (WIDTH - 200, HEIGHT - 45))
+
+        button_text = BUTTON_FONT.render("Back to Main Menu", True, White)
+        button_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 40, 200, 30)
+        pygame.draw.rect(screen, Gray, button_rect)
+        screen.blit(button_text, (WIDTH // 2 - 80, HEIGHT - 40))
+
         if self.selected:
             row, col = self.selected.row, self.selected.col
             pygame.draw.circle(screen, Blue, (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 15)
@@ -180,32 +197,55 @@ class Game:
 
         if best_move:
             self.board.move(piece, best_move[0], best_move[1])
-            captuDarkBrown = valid_moves[best_move]
-            if captuDarkBrown:
-                self.board.remove([self.board.board[captuDarkBrown[0]][captuDarkBrown[1]]])
+            captured_piece = valid_moves[best_move]
+            if captured_piece:
+                self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
             self.change_turn()
 
 def main():
     clock = pygame.time.Clock()
     game = Game()
-    main_menu(game)  # Show the main menu when the game starts
+    main_menu(game)  # show menu dulu
+
     while True:
         clock.tick(60)
+
+        # AI melakukan langkah jika gilirannya
         if game.board.turn == DarkBrown:
             game.ai_move()
 
+        # Periksa apakah ada pemenang
+        winner = game.board.winner()
+        if winner:
+            win_text = "You Win!" if winner == White else "Opponent Wins!"
+            text = FONT.render(win_text, True, Blue)
+            screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2))
+            pygame.display.flip()
+            pygame.time.wait(3000)
+            pygame.quit()
+            sys.exit()
+
+        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN and game.board.turn == White:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
-                row, col = y // SQUARE_SIZE, x // SQUARE_SIZE
-                game.select(row, col)
 
+                # Check if "Back to Main Menu" button is clicked
+                if WIDTH // 2 - 100 <= x <= WIDTH // 2 + 100 and HEIGHT - 40 <= y <= HEIGHT - 10:
+                    main_menu(game)
+
+                # Handle game board selection
+                if game.board.turn == White:
+                    row, col = y // SQUARE_SIZE, x // SQUARE_SIZE
+                    game.select(row, col)
+
+        # Update game state and display
         game.update()
-        pygame.display.flip()
+        pygame.display.update()
 
 if __name__ == "__main__":
     main()
