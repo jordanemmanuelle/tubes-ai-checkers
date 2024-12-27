@@ -13,41 +13,68 @@ def draw_button(screen, color, text, font, text_color, x, y, width, height, hove
         border_color = (139, 69, 19)  # DarkBrown border
         button_color = color  # Default button color
 
-    # Draw button with gradient
     pygame.draw.rect(screen, button_color, (x + 5, y + 5, width - 10, height - 10))  # Inner rectangle
     pygame.draw.rect(screen, border_color, (x, y, width, height), 5)  # Outer rectangle
-
-    # Draw the text in the center of the button
     draw_text(screen, text, font, text_color, x + (width // 2 - font.size(text)[0] // 2), y + (height // 2 - font.get_height() // 2))
+
+def show_instructions(screen):
+    font = pygame.font.SysFont('arial', 30)
+    BACKGROUND_COLOR = (47, 79, 79)
+    TEXT_COLOR = (255, 255, 255)
+
+    instructions = [
+        "Welcome to Checkers Game!",
+        "Instructions:",
+        "",
+        "1. Each player takes turns to move their pieces.",
+        "2. Capture opponent pieces by jumping over them.",
+        "3. Win by capturing all opponent pieces or blocking their moves.",
+        "",
+        "",
+        "Press ESC to go back."
+    ]
+
+    while True:
+        screen.fill(BACKGROUND_COLOR)
+        for i, line in enumerate(instructions):
+            draw_text(screen, line, font, TEXT_COLOR, 50, 50 + i * 40)
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return
 
 def main_menu(game):
     menu_font = pygame.font.SysFont('arial', 60)
     button_font = pygame.font.SysFont('arial', 36)
-    BACKGROUND_COLOR = (47, 79, 79)  # DarkSlateGray for background
-    BUTTON_COLOR = (210, 180, 140)  # Tan for buttons
-    TEXT_COLOR = (255, 255, 255)  # White for text
+    BACKGROUND_COLOR = (47, 79, 79)
+    BUTTON_COLOR = (210, 180, 140)
+    TEXT_COLOR = (255, 255, 255)
 
     screen = pygame.display.get_surface()
 
     button_width = 300
     button_height = 80
     button_x = (screen.get_width() - button_width) // 2
-    button_y = 250
+    button_y = 215
     button_spacing = 100
+
+    options = ["Play Easy", "Play Medium", "Play Hard", "Play Extreme", "Instructions", "Quit"]
 
     while True:
         screen.fill(BACKGROUND_COLOR)
-        draw_text(screen, "Checkers Game", menu_font, TEXT_COLOR, 200, 100)
+        draw_text(screen, "Checkers Game", menu_font, TEXT_COLOR, 200, 80)
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        for i, difficulty in enumerate(["Easy", "Medium", "Hard", "Extreme"]):
+        for i, option in enumerate(options):
             y_pos = button_y + i * button_spacing
             rect = pygame.Rect(button_x, y_pos, button_width, button_height)
             hover = rect.collidepoint(mouse_x, mouse_y)
-            draw_button(screen, BUTTON_COLOR, difficulty, button_font, TEXT_COLOR, button_x, y_pos, button_width, button_height, hover)
-
-        quit_button_y = button_y + 4 * button_spacing
-        draw_button(screen, BUTTON_COLOR, "Press ESC to Quit", button_font, TEXT_COLOR, button_x, quit_button_y, button_width, button_height)
+            draw_button(screen, BUTTON_COLOR, option, button_font, TEXT_COLOR, button_x, y_pos, button_width, button_height, hover)
 
         pygame.display.update()
 
@@ -57,11 +84,14 @@ def main_menu(game):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                for i, difficulty in enumerate(["easy", "medium", "hard", "extreme"]):
+                for i, option in enumerate(options):
                     rect = pygame.Rect(button_x, button_y + i * button_spacing, button_width, button_height)
                     if rect.collidepoint(mouse_x, mouse_y):
-                        game.difficulty = difficulty
-                        return
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                sys.exit()
+                        if option.startswith("Play"):
+                            game.difficulty = option.split()[-1].lower()
+                            return
+                        elif option == "Instructions":
+                            show_instructions(screen)
+                        elif option == "Quit":
+                            pygame.quit()
+                            sys.exit()
