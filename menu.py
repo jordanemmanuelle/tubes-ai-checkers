@@ -13,8 +13,8 @@ def draw_button(screen, color, text, font, text_color, x, y, width, height, hove
         border_color = (139, 69, 19)  # DarkBrown border
         button_color = color  # Default button color
 
-    pygame.draw.rect(screen, button_color, (x + 5, y + 5, width - 10, height - 10))  # Inner rectangle
-    pygame.draw.rect(screen, border_color, (x, y, width, height), 5)  # Outer rectangle
+    pygame.draw.rect(screen, button_color, (x + 5, y + 5, width - 10, height - 10))  # inner rectangle
+    pygame.draw.rect(screen, border_color, (x, y, width, height), 5)  # outer rectangle
     draw_text(screen, text, font, text_color, x + (width // 2 - font.size(text)[0] // 2), y + (height // 2 - font.get_height() // 2))
 
 def show_instructions(screen):

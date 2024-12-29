@@ -36,7 +36,7 @@ class Piece:
         self.king = True
 
     def draw(self, screen):
-        radius = SQUARE_SIZE // 3 # size lingkarannya 
+        radius = SQUARE_SIZE // 3           # size lingkarannya 
         center_x = self.col * SQUARE_SIZE + SQUARE_SIZE // 2
         center_y = self.row * SQUARE_SIZE + SQUARE_SIZE // 2
 
@@ -99,7 +99,7 @@ class Board:
     def get_valid_moves(self, piece):
         moves = {} # save gerakan valid
         direction = -1 if piece.color == White else 1 # arah jalan (atas buat kita, bawah buat musuh)
-        for dcol in [-1, 1]: # cek gerakan ke kiri (-1) atau ke kanan ()
+        for dcol in [-1, 1]: # cek gerakan ke kiri (-1) atau ke kanan (1)
             row, col = piece.row + direction, piece.col + dcol # posisi tujuan
             if 0 <= row < ROWS and 0 <= col < COLS and self.board[row][col] == 0:
                 moves[(row, col)] = None # add langkah biasa ke daftar gerakan
@@ -114,7 +114,7 @@ class Board:
     def remove(self, pieces): # buat kalau piece-nya dimakan
         for piece in pieces:
             if piece.color == White: # kalau warnah putih
-                self.pieces_captured_ai += 1 # tambahkan counter yang ditangkap sama lawan (AI)
+                self.pieces_captured_ai += 1 # +1 counter yang ditangkap sama lawan (AI)
             elif piece.color == DarkBrown: # kalau warna coklat
                 self.pieces_captured_player += 1 # tambahin ke counter kita
             self.board[piece.row][piece.col] = 0 # set posisi piecenya jadi kosong
