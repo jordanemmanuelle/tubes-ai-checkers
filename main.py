@@ -74,7 +74,7 @@ class Board:
     def draw_squares(self):
         for row in range(ROWS):
             for col in range(COLS):
-                # bikin papannya jadi kaya cautr
+                # bikin papannya jadi kaya catur
                 color = (169, 169, 169) if (row + col) % 2 == 0 else (105, 105, 105)
                 pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
@@ -88,11 +88,11 @@ class Board:
 
     def move(self, piece, row, col):
         # mindahin piece ke posisi baru
-        self.board[piece.row][piece.col] = 0 # posisi sebelumnya jaid kosong
+        self.board[piece.row][piece.col] = 0 # posisi sebelumnya jadi kosong
         self.board[row][col] = piece
         piece.row, piece.col = row, col # update posisi piece
 
-        # jika udah sampai baris terakhir, piecenya berubah jadi king
+        # jika sudah sampai baris terakhir, piecenya berubah jadi king
         if row == 0 and piece.color == White or row == ROWS - 1 and piece.color == DarkBrown:
             piece.make_king()
 
@@ -113,7 +113,7 @@ class Board:
 
     def remove(self, pieces): # buat kalau piece-nya dimakan
         for piece in pieces:
-            if piece.color == White: # kalau warnah putih
+            if piece.color == White: # kalau warna putih
                 self.pieces_captured_ai += 1 # +1 counter yang ditangkap sama lawan (AI)
             elif piece.color == DarkBrown: # kalau warna coklat
                 self.pieces_captured_player += 1 # tambahin ke counter kita
@@ -130,10 +130,10 @@ class Board:
         return None 
 
     def get_all_pieces(self, color):
-        pieces = [] # array buat nyimpen piece
+        pieces = [] # array untuk menyimpan piece
         for row in self.board:
             for piece in row:
-                if piece != 0 and piece.color == color: # kalo elemen bukan 0 dan warnanya sesuai
+                if piece != 0 and piece.color == color: # kalau elemen bukan 0 dan warnanya sesuai
                     pieces.append(piece) # tambahkan ke array piece
         return pieces
 
@@ -143,6 +143,7 @@ class Game:
         self.board = Board()
         self.selected = None
         self.valid_moves = {}
+        self.difficulty = 'easy'  # default difficulty
 
     def reset(self):
         self.board = Board()
@@ -158,7 +159,7 @@ class Game:
                     self.select(row, col)
 
             piece = self.board.board[row][col]
-            if piece != 0 and piece.color == self.board.turn: # pastiin piecenya dari giliran yang seharusnya
+            if piece != 0 and piece.color == self.board.turn: # pastikan piecenya dari giliran yang seharusnya
                 self.selected = piece
                 self.valid_moves = self.board.get_valid_moves(piece) # ambil gerakan valid dari piece ini
                 return True
@@ -166,11 +167,11 @@ class Game:
 
     def _move(self, row, col):
         piece = self.selected # bidak yang dipilih
-        if piece and (row, col) in self.valid_moves: # kalo valid
-            self.board.move(piece, row, col) # pindahin piece ke posisi baru 
-            captured_piece = self.valid_moves[(row, col)] # ambil piece yang udah dimakan (kalo ada doang)
+        if piece and (row, col) in self.valid_moves: # kalau valid
+            self.board.move(piece, row, col) # pindahkan piece ke posisi baru 
+            captured_piece = self.valid_moves[(row, col)] # ambil piece yang sudah dimakan (kalau ada)
             if captured_piece:
-                # hapus piece yang udah dimakan
+                # hapus piece yang sudah dimakan
                 self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
 
             self.change_turn() # ganti giliran
@@ -197,30 +198,78 @@ class Game:
 
         if self.selected:
             row, col = self.selected.row, self.selected.col
-            # kasih dot biru buat opsi langkah
+            # beri dot biru untuk opsi langkah
             pygame.draw.circle(screen, Blue, (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 15)
             
-            for move in self.valid_moves: #show dot biru di langkah yang valid
+            for move in self.valid_moves: # tampilkan dot biru di langkah yang valid
                 pygame.draw.circle(screen, Blue, (move[1] * SQUARE_SIZE + SQUARE_SIZE // 2, move[0] * SQUARE_SIZE + SQUARE_SIZE // 2), 15)
 
     def ai_move(self): # otak AI
         pieces = self.board.get_all_pieces(DarkBrown) # ambil semua pieces AI (coklat)
+        if self.difficulty == 'easy':
+            self.random_move(pieces)
+        elif self.difficulty == 'medium':
+            self.capture_move(pieces)  # AI mencoba menangkap piece jika memungkinkan
+        elif self.difficulty == 'hard':
+            self.smart_move(pieces)  # AI menggunakan strategi dasar
+        elif self.difficulty == 'extreme':
+            self.optimal_move(pieces)  # AI menggunakan algoritma canggih
+
+    def random_move(self, pieces):
+        while pieces:
+            piece = random.choice(pieces)
+            valid_moves = self.board.get_valid_moves(piece)
+            if valid_moves:
+                move = random.choice(list(valid_moves.keys()))
+                self.board.move(piece, move[0], move[1])
+                captured_piece = valid_moves[move]
+                if captured_piece:
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
+                self.change_turn()
+                return
+            pieces.remove(piece)
+        self.change_turn()
+
+    def capture_move(self, pieces):
         for piece in pieces:
-            valid_moves = self.board.get_valid_moves(piece) # ambil gerakan valid untuk piece
-            for move in valid_moves: # cek setiap valid moves
-                if 0 <= move[0] < ROWS and 0 <= move[1] < COLS: # pastiin gerakannya masih dalam papan permainan
-                    self.board.move(piece, move[0], move[1]) # pindahin piece ke posisi baru
-                    captured_piece = valid_moves[move] # ambil piece yang dimakan (kalau ada doang)
-                    if captured_piece: # kalau ada yang dimakan, remove
-                        self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
-                    self.change_turn() # ganti giliran
+            valid_moves = self.board.get_valid_moves(piece)
+            for move in valid_moves:
+                captured_piece = valid_moves[move]
+                if captured_piece:
+                    self.board.move(piece, move[0], move[1])
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
+                    self.change_turn()
                     return
+        self.random_move(pieces)
+
+    def smart_move(self, pieces):
+        for piece in pieces:
+            valid_moves = self.board.get_valid_moves(piece)
+            for move in valid_moves:
+                captured_piece = valid_moves[move]
+                if captured_piece:
+                    self.board.move(piece, move[0], move[1])
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
+                    self.change_turn()
+                    return
+        for piece in pieces:
+            valid_moves = self.board.get_valid_moves(piece)
+            for move in valid_moves:
+                if move[0] > piece.row:  # move forward
+                    self.board.move(piece, move[0], move[1])
+                    self.change_turn()
+                    return
+        self.random_move(pieces)
+
+    def optimal_move(self, pieces):
+        # Implement a more advanced AI strategy here (e.g., minimax with alpha-beta pruning)
+        pass
 
 
 def main():
     clock = pygame.time.Clock() # buat ngatur kecepatan frame
-    game = Game() # membuat objek game unutk memulai permainan
-    main_menu(game) # show menu dulu sebelumnya
+    game = Game() # membuat objek game untuk memulai permainan
+    main_menu(game) # tampilkan menu dulu sebelumnya
 
     while True:
         clock.tick(60) # max 60 FPS
@@ -243,13 +292,11 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-            # kalo mouse diklik
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos() # ambil posisi mouse saat diklik
                 if WIDTH // 2 - 100 <= x <= WIDTH // 2 + 100 and HEIGHT - 40 <= y <= HEIGHT - 10:
                     game.reset()
                     main_menu(game)
-                # hitung baris dan kolom yang diklik berdasarkan ukuran kotak
                 row, col = y // SQUARE_SIZE, x // SQUARE_SIZE
                 game.select(row, col)
 
