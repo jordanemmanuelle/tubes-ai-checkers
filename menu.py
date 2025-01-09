@@ -63,7 +63,7 @@ def main_menu(game):
     button_y = 215
     button_spacing = 100
 
-    options = ["Play Easy", "Play Medium", "Play Hard", "Play Extreme", "Instructions", "Quit"]
+    options = ["Play Easy", "Play Medium", "Play Hard", "Instructions", "Quit"]
 
     while True:
         screen.fill(BACKGROUND_COLOR)
