@@ -215,51 +215,53 @@ class Game:
         elif self.difficulty == 'extreme':
             self.optimal_move(pieces)  # AI menggunakan algoritma canggih
 
-    def random_move(self, pieces):
+    def random_move(self, pieces): # membuat random moves
         while pieces:
-            piece = random.choice(pieces)
-            valid_moves = self.board.get_valid_moves(piece)
+            piece = random.choice(pieces) # pilih piece secara acak
+            valid_moves = self.board.get_valid_moves(piece) # ambil semua valid move
             if valid_moves:
-                move = random.choice(list(valid_moves.keys()))
-                self.board.move(piece, move[0], move[1])
-                captured_piece = valid_moves[move]
-                if captured_piece:
-                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
+                move = random.choice(list(valid_moves.keys())) # pilih 1 random move
+                self.board.move(piece, move[0], move[1]) # pindahin piece ke kotak tujuan
+                captured_piece = valid_moves[move] # cek apakah gerakannya makan lawan
+                if captured_piece: # jika ada yang termakan
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]]) # remove punya lawan
                 self.change_turn()
                 return
             pieces.remove(piece)
         self.change_turn()
 
     def capture_move(self, pieces):
-        for piece in pieces:
-            valid_moves = self.board.get_valid_moves(piece)
-            for move in valid_moves:
-                captured_piece = valid_moves[move]
-                if captured_piece:
-                    self.board.move(piece, move[0], move[1])
-                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
-                    self.change_turn()
-                    return
-        self.random_move(pieces)
+        # Fungsi bikin gerakan menangkap bidak lawan jika memungkinkan.
+        for piece in pieces:  # Iterasi bidak.
+            valid_moves = self.board.get_valid_moves(piece)  # Ambil semua gerakan valid untuk bidak itu.
+            for move in valid_moves:  # Iterasi gerakan valid.
+                captured_piece = valid_moves[move]  # Periksa si gerakannya nangkep bidak lawan ga?
+                if captured_piece:  # Jika bidak lawan ketangkep.
+                    self.board.move(piece, move[0], move[1])  # Pindahin si bidaknya ke posisi tujuan.
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])  # Hapus bidak lawan.
+                    self.change_turn()  # Ganti giliran ke pemain berikutnya.
+                    return  # Selesai dengan gerakan menangkap.
+        self.random_move(pieces)  # Jika tidak ada gerakan menangkap, lakukan gerakan acak.
 
     def smart_move(self, pieces):
-        for piece in pieces:
-            valid_moves = self.board.get_valid_moves(piece)
-            for move in valid_moves:
-                captured_piece = valid_moves[move]
-                if captured_piece:
-                    self.board.move(piece, move[0], move[1])
-                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])
-                    self.change_turn()
-                    return
-        for piece in pieces:
-            valid_moves = self.board.get_valid_moves(piece)
-            for move in valid_moves:
-                if move[0] > piece.row:  # move forward
-                    self.board.move(piece, move[0], move[1])
-                    self.change_turn()
-                    return
-        self.random_move(pieces)
+        # Fungsi bikin gerakan cerdas dengan prioritas menangkap lawan dan maju ke depan.
+        for piece in pieces:  # Iterasi bidak.
+            valid_moves = self.board.get_valid_moves(piece)  # Ambil semua gerakan valid untuk bidak itu.
+            for move in valid_moves:  # Iterasi gerakan valid.
+                captured_piece = valid_moves[move]  # Periksa si gerakannya nangkep bidak lawan ga?
+                if captured_piece:  # Jika bidak lawan ketangkep.
+                    self.board.move(piece, move[0], move[1])  # Pindahin si bidaknya ke posisi tujuan.
+                    self.board.remove([self.board.board[captured_piece[0]][captured_piece[1]]])  # Hapus bidak lawan.
+                    self.change_turn()  # Ganti giliran ke pemain berikutnya.
+                    return  # Selesai dengan gerakan menangkap.
+        for piece in pieces:  # Jika tidak ada gerakan menangkap, iterasi ulang untuk memilih gerakan maju.
+            valid_moves = self.board.get_valid_moves(piece)  # Ambil semua gerakan valid untuk bidak itu.
+            for move in valid_moves:  # Iterasi gerakan valid.
+                if move[0] > piece.row:  # Jika gerakan memajukan bidak ke depan (misal ke baris lebih tinggi).
+                    self.board.move(piece, move[0], move[1])  # Pindahkan bidak ke posisi tujuan.
+                    self.change_turn()  # Ganti giliran ke pemain berikutnya.
+                    return  # Selesai dengan gerakan maju.
+        self.random_move(pieces)  # Jika tidak ada gerakan maju, lakukan gerakan acak.
 
     def optimal_move(self, pieces):
         # Implement a more advanced AI strategy here (e.g., minimax with alpha-beta pruning)
